@@ -71,9 +71,13 @@ const App: React.FC = () => {
       return;
     }
 
-    // A square is already selected, check if clicking another piece of the same color
+    // A square is already selected, check if this is a valid move destination first
     const targetPiece = game.get(square as any);
-    if (targetPiece && targetPiece.color === game.turn()) {
+    const isValidMove = possibleMoves.some(m => m.to === square);
+    
+    // If it's a valid move (like castling to a square with a rook), execute it
+    // Otherwise, if clicking another piece of the same color, select that piece instead
+    if (targetPiece && targetPiece.color === game.turn() && !isValidMove) {
       // Select the new piece instead
       setSelectedSquare(square);
       setPossibleMoves(game.moves({ square: square as any, verbose: true }));
@@ -91,8 +95,22 @@ const App: React.FC = () => {
       return;
     }
     
-    // Try to make a move
-    const move = game.move({ from: selectedSquare, to: square });
+    // Check if this is a castling move (king moving 2+ squares or to castling target)
+    // For Chess960, we need to check all possible moves to find the castling notation
+    let move = null;
+    if (piece && piece.type.toLowerCase() === 'k') {
+      const possibleCastling = possibleMoves.find(m => m.to === square && (m.flags.includes('k') || m.flags.includes('q')));
+      if (possibleCastling) {
+        // Use the SAN notation for castling
+        move = game.move(possibleCastling.san);
+      } else {
+        // Regular king move
+        move = game.move({ from: selectedSquare, to: square });
+      }
+    } else {
+      // Non-king piece, use standard notation
+      move = game.move({ from: selectedSquare, to: square });
+    }
     
     if (move) {
       setSelectedSquare(null);
