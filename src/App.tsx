@@ -66,26 +66,63 @@ const App: React.FC = () => {
       const piece = game.get(square as any);
       if (piece && piece.color === game.turn()) {
         setSelectedSquare(square);
-        setPossibleMoves(game.moves({ square: square as any, verbose: true }));
+        const moves = game.moves({ square: square as any, verbose: true });
+        console.log('Available moves from', square, ':', moves);
+        console.log('Castling moves:', moves.filter(m => m.flags.includes('k') || m.flags.includes('q')));
+        setPossibleMoves(moves);
       }
       return;
     }
 
     // A square is already selected, check if this is a valid move destination first
     const targetPiece = game.get(square as any);
-    const isValidMove = possibleMoves.some(m => m.to === square);
+    const piece = game.get(selectedSquare as any);
     
-    // If it's a valid move (like castling to a square with a rook), execute it
-    // Otherwise, if clicking another piece of the same color, select that piece instead
-    if (targetPiece && targetPiece.color === game.turn() && !isValidMove) {
+    // Find all possible moves to this square
+    const movesToSquare = possibleMoves.filter(m => m.to === square);
+    
+    // Special handling: if king is selected and clicking on own rook, try to castle
+    let possibleMove;
+    let isCastlingToRook = false;
+    if (piece && piece.type.toLowerCase() === 'k' && 
+        targetPiece && targetPiece.type.toLowerCase() === 'r' && 
+        targetPiece.color === game.turn()) {
+      
+      const selectedFile = selectedSquare.charCodeAt(0);
+      const targetFile = square.charCodeAt(0);
+      const isKingside = targetFile > selectedFile;
+      
+      // Find the appropriate castling move (k=kingside, q=queenside)
+      possibleMove = possibleMoves.find(m => 
+        isKingside ? m.flags.includes('k') : m.flags.includes('q')
+      );
+      
+      isCastlingToRook = possibleMove !== undefined;
+      console.log('Castling to rook:', square, 'kingside:', isKingside, 'move:', possibleMove);
+    } else {
+      // Prioritize castling moves over regular moves
+      possibleMove = movesToSquare.find(m => m.flags.includes('k') || m.flags.includes('q')) || movesToSquare[0];
+    }
+    
+    const isValidMove = possibleMove !== undefined;
+    
+ 
+    if (targetPiece && targetPiece.color === game.turn() && !isValidMove && !isCastlingToRook) {
       // Select the new piece instead
       setSelectedSquare(square);
       setPossibleMoves(game.moves({ square: square as any, verbose: true }));
       return;
     }
+    
+    // If clicking on a piece but not valid and not castling to rook, check if we should select it
+    if (!isValidMove && !isCastlingToRook) {
+      // Invalid move, deselect
+      setSelectedSquare(null);
+      setPossibleMoves([]);
+      return;
+    }
 
     // Check if this is a pawn promotion
-    const piece = game.get(selectedSquare as any);
     const isPromotion = piece && piece.type.toLowerCase() === 'p' && 
       ((piece.color === 'w' && square[1] === '8') || (piece.color === 'b' && square[1] === '1'));
     
@@ -95,22 +132,27 @@ const App: React.FC = () => {
       return;
     }
     
-    // Check if this is a castling move (king moving 2+ squares or to castling target)
-    // For Chess960, we need to check all possible moves to find the castling notation
+    // Try to execute the move
     let move = null;
-    if (piece && piece.type.toLowerCase() === 'k') {
-      const possibleCastling = possibleMoves.find(m => m.to === square && (m.flags.includes('k') || m.flags.includes('q')));
-      if (possibleCastling) {
-        // Use the SAN notation for castling
-        move = game.move(possibleCastling.san);
-      } else {
-        // Regular king move
-        move = game.move({ from: selectedSquare, to: square });
-      }
+    
+    // Check if this is a special move (castling) that requires SAN notation
+    const isCastling = possibleMove && (possibleMove.flags.includes('k') || possibleMove.flags.includes('q'));
+    
+    console.log('Attempting move from', selectedSquare, 'to', square);
+    console.log('Possible moves to square:', movesToSquare);
+    console.log('Selected move:', possibleMove);
+    console.log('Is castling:', isCastling);
+    
+    if (isCastling) {
+      // Use SAN notation for castling moves
+      console.log('Executing castling move:', possibleMove.san);
+      move = game.move(possibleMove.san);
     } else {
-      // Non-king piece, use standard notation
+      // Use standard from-to notation for regular moves
       move = game.move({ from: selectedSquare, to: square });
     }
+    
+    console.log('Move result:', move);
     
     if (move) {
       setSelectedSquare(null);
@@ -205,6 +247,16 @@ const App: React.FC = () => {
     const isSelected = selectedSquare === squareName;
     const possibleMove = possibleMoves.find(m => m.to === squareName);
     const isCapture = possibleMove && piece;
+    
+    // Check if this square is a rook that can be clicked for castling
+    const isCastlingRook = selectedSquare && piece && piece.type.toLowerCase() === 'r' && 
+      piece.color === game.turn() && possibleMoves.some(m => {
+        if (!m.flags.includes('k') && !m.flags.includes('q')) return false;
+        const selectedFile = selectedSquare.charCodeAt(0);
+        const rookFile = squareName.charCodeAt(0);
+        const isKingside = rookFile > selectedFile;
+        return isKingside ? m.flags.includes('k') : m.flags.includes('q');
+      });
 
     return (
       <div 
@@ -219,6 +271,7 @@ const App: React.FC = () => {
         )}
         {possibleMove && !isCapture && <div className="move-dot" />}
         {possibleMove && isCapture && <div className="move-ring" />}
+        {isCastlingRook && <div className="move-ring" />}
       </div>
     );
   };
