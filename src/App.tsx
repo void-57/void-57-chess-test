@@ -301,8 +301,8 @@ const App: React.FC = () => {
           <div className="logo-title">
             <GiChessKing className="chess-logo" />
             <h1>void57-chess</h1>
+            <span className="subtitle">Testing Chess & Chess960</span>
           </div>
-          <p className="subtitle">Testing Chess & Chess960</p>
         </div>
         
         <div className="controls">

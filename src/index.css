@@ -52,6 +52,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .chess-logo {
@@ -70,7 +71,11 @@ body {
 .title-section .subtitle {
   font-size: 0.75rem;
   color: var(--text-muted);
-  margin-top: 0.25rem;
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
 }
 
 .controls {
@@ -244,7 +249,7 @@ button:disabled {
 }
 
 .piece {
-  font-size: clamp(2.5rem, 7vw, 3.5rem);
+  font-size: clamp(3rem, 7vw, 4rem);
   line-height: 1;
   z-index: 5;
   pointer-events: none;
@@ -550,6 +555,7 @@ button:disabled {
   
   .title-section .subtitle {
     font-size: 0.7rem;
+    padding: 0.2rem 0.65rem;
   }
   
   .controls {
@@ -599,7 +605,7 @@ button:disabled {
   }
   
   .piece {
-    font-size: clamp(1.5rem, 5vw, 2.5rem);
+    font-size: clamp(2.5rem, 8vw, 3.5rem);
   }
   
   .sidebar {
@@ -641,6 +647,12 @@ button:disabled {
     font-size: 1.5rem;
   }
   
+  .title-section .subtitle {
+    font-size: 0.65rem;
+    margin-left: 0.25rem;
+    padding: 0.2rem 0.6rem;
+  }
+  
   .control-group label {
     font-size: 0.7rem;
   }
@@ -664,7 +676,7 @@ button:disabled {
   }
   
   .piece {
-    font-size: clamp(1.25rem, 4.5vw, 2rem);
+    font-size: clamp(2rem, 7vw, 3rem);
   }
   
   .card-header {
@@ -729,7 +741,7 @@ button:disabled {
   }
   
   .piece {
-    font-size: clamp(1rem, 4vw, 1.75rem);
+    font-size: clamp(1.75rem, 6.5vw, 2.5rem);
   }
   
   .promotion-dialog {
